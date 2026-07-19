@@ -67,14 +67,20 @@ function createCalculatorOverlay(theme) {
   overlay.style.boxShadow = colors.shadow;
   overlay.style.fontFamily = 'Arial, sans-serif';
 
-  overlay.innerHTML = `
-    <input id="ext-calc-input" type="text" placeholder="Enter expression and press Enter"
-      style="width:100%;padding:8px;border-radius:6px;box-sizing:border-box;background:${colors.inputBackground};border:1px solid ${colors.border};color:${colors.text};" />
-  `;
+  const input = document.createElement('input');
+  input.id = 'ext-calc-input';
+  input.type = 'text';
+  input.placeholder = 'Enter expression and press Enter';
+  input.style.width = '100%';
+  input.style.padding = '8px';
+  input.style.borderRadius = '6px';
+  input.style.boxSizing = 'border-box';
+  input.style.background = colors.inputBackground;
+  input.style.border = `1px solid ${colors.border}`;
+  input.style.color = colors.text;
+  overlay.appendChild(input);
 
   document.body.appendChild(overlay);
-
-  const input = overlay.querySelector('#ext-calc-input');
 
   input.addEventListener('keydown', async (event) => {
     if (event.key === 'Enter') {

@@ -3,6 +3,9 @@
 A lightweight browser extension that provides a quick, easy-to-use calculator available from the extension popup and via content/background scripts.
 
 ## Features
+- Standalone calculator in the toolbar popup, usable with mouse or keyboard
+- Calculation history (last 20 entries) in the popup — click an entry to reuse it
+- Dark/light theme toggle, shared between the popup and the on-page overlay
 - Double-click any input, textarea, or content-editable area to open an inline calculator
 - Type an expression and press Enter — the field is replaced with the numeric result
 - Result is copied to the clipboard automatically

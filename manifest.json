@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "My First Firefox Extension",
+  "name": "Simple Calculator Extension",
   "version": "1.0.0",
-  "description": "A simple starter extension for Firefox.",
+  "description": "A lightweight calculator for Firefox: use the popup, or double-click any editable field on a site you've allowed to calculate inline.",
   "permissions": ["activeTab", "storage"],
   "optional_permissions": ["*://*/*"],
   "background": {
@@ -17,5 +17,13 @@
     "page": "popup/settings.html",
     "open_in_tab": true,
     "browser_style": false
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "simple-calculator@wesleyblake95.dev",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
   }
 }
