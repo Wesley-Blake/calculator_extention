@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculator Popup</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="calculator">
+      <div class="calculator-main">
+        <div class="toolbar">
+          <span class="toolbar-label">
+            Calculator
+            <span class="tooltip-trigger" aria-label="Supported operators">?</span>
+            <span class="tooltip-bubble">+ − × ÷ ^ ( )</span>
+          </span>
+          <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme">🌙</button>
+        </div>
+
+        <div class="display">
+          <input id="expression" class="expression" type="text" value="0" spellcheck="false" autocomplete="off" />
+          <div class="display-footer">
+            <div id="result" class="result">0</div>
+          </div>
+        </div>
+
+        <div id="history-panel" class="history-panel"></div>
+      </div>
+    </div>
+
+    <script src="../calculator.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
