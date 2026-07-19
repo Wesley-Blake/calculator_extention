@@ -54,30 +54,44 @@ function updateDisplay() {
   resultEl.setAttribute('title', displayResult);
 }
 
+// Build a single history row. Uses textContent/dataset rather than an
+// innerHTML template so history entries can never be interpreted as markup,
+// regardless of what the calculator grammar allows now or in the future.
+function renderHistoryItem(entry) {
+  const button = document.createElement('button');
+  button.className = 'history-item';
+  button.type = 'button';
+  if (entry) button.dataset.expression = entry.expression;
+
+  const expressionSpan = document.createElement('span');
+  expressionSpan.className = 'history-expression';
+  expressionSpan.textContent = entry ? entry.expression : 'No history yet';
+
+  button.appendChild(expressionSpan);
+
+  if (entry) {
+    const resultSpan = document.createElement('span');
+    resultSpan.className = 'history-result';
+    resultSpan.textContent = entry.result;
+    button.appendChild(resultSpan);
+  }
+
+  return button;
+}
+
 // Render the history sidebar from the most recent entries
 // Rebuild the history list from the recent calculation entries stored in memory.
 function renderHistory() {
   const items = history.slice(-20).reverse();
 
+  historyPanel.innerHTML = '';
+
   if (!items.length) {
-    historyPanel.innerHTML = `
-      <button class="history-item" type="button">No history yet</button>
-    `;
+    historyPanel.appendChild(renderHistoryItem(null));
     return;
   }
 
-  historyPanel.innerHTML = `
-    ${items
-      .map(
-        (entry) => `
-          <button class="history-item" type="button" data-expression="${entry.expression}">
-            <span class="history-expression">${entry.expression}</span>
-            <span class="history-result">${entry.result}</span>
-          </button>
-        `
-      )
-      .join('')}
-  `;
+  items.forEach((entry) => historyPanel.appendChild(renderHistoryItem(entry)));
 }
 
 // Add a new calculation to history, keeping the last 20 entries

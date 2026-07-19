@@ -80,9 +80,24 @@ browser.permissions.onRemoved.addListener(async ({ origins }) => {
   }
 });
 
-browser.runtime.onMessage.addListener((message) => {
-  if (message?.type === 'ensureRegistered') return registerHost(message.origin);
-  if (message?.type === 'ensureUnregistered') return unregisterHost(message.origin);
+// Only accept these messages from this extension's own privileged pages
+// (popup/settings), and only for an origin the user has actually approved —
+// otherwise a bug or future feature that forwards an unvalidated string here
+// could (un)register the content script on an origin it was never meant to.
+browser.runtime.onMessage.addListener(async (message, sender) => {
+  if (sender.id !== browser.runtime.id) return;
+  if (typeof message?.origin !== 'string') return;
+
+  const allowedHosts = await getAllowedHosts();
+
+  if (message.type === 'ensureRegistered') {
+    if (!allowedHosts.includes(message.origin)) return;
+    return registerHost(message.origin);
+  }
+
+  if (message.type === 'ensureUnregistered') {
+    return unregisterHost(message.origin);
+  }
 });
 
 syncRegistrations();
