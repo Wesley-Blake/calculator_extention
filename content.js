@@ -29,6 +29,7 @@ const THEMES = {
   },
 };
 
+// Read the current theme from extension storage so the overlay matches the popup UI.
 async function getTheme() {
   const stored = await browser.storage.local.get(THEME_STORAGE_KEY);
   return THEMES[stored[THEME_STORAGE_KEY]] ? stored[THEME_STORAGE_KEY] : 'dark';
@@ -47,6 +48,7 @@ function applyPlaceholderStyle(color) {
   styleEl.textContent = `#ext-calc-input::placeholder { color: ${color}; }`;
 }
 
+// Create the floating calculator overlay that appears near the active editable field.
 function createCalculatorOverlay(theme) {
   if (document.getElementById('ext-calc-overlay')) return null;
 
@@ -116,11 +118,13 @@ function createCalculatorOverlay(theme) {
   return overlay;
 }
 
+// Remove the floating calculator if it is currently open.
 function removeOverlay() {
   const overlay = document.getElementById('ext-calc-overlay');
   if (overlay) overlay.remove();
 }
 
+// Position the overlay beside the target element and fill it with any selected text.
 async function showOverlayNearTarget(target, prefill) {
   const overlay = document.getElementById('ext-calc-overlay') || createCalculatorOverlay(await getTheme());
   if (!overlay) return;

@@ -23,6 +23,7 @@
 // clean up.
 const registeredScripts = new Map();
 
+// Register the calculator content script for a specific site origin.
 function registerHost(origin) {
   if (registeredScripts.has(origin)) return registeredScripts.get(origin);
 
@@ -45,8 +46,8 @@ async function unregisterHost(origin) {
   handle.unregister();
 }
 
-// Make the live registrations match the current allow-list: drop anything
-// no longer allowed, add anything new.
+// Keep the live content-script registrations in sync with the allow-list.
+// This removes sites that were revoked and adds sites that were newly allowed.
 async function syncRegistrations() {
   const allowedHosts = await getAllowedHosts();
   const allowedSet = new Set(allowedHosts);

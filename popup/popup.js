@@ -11,6 +11,7 @@ const sitePermissionButton = document.getElementById('site-permission-button');
 let expression = '';
 let history = [];
 
+// Apply the chosen theme to the popup document and update the toggle button label.
 function applyTheme(theme) {
   const isLight = theme === 'light';
   document.documentElement.classList.toggle('theme-light', isLight);
@@ -24,6 +25,7 @@ function applyTheme(theme) {
 // The on-page overlay (content.js) can't see this page's localStorage, so
 // the theme is mirrored into shared extension storage whenever it's read
 // or changed here.
+// Store the selected theme in both popup-local storage and extension storage.
 function persistTheme(theme) {
   window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   browser.storage.local.set({ [THEME_STORAGE_KEY]: theme });
@@ -53,6 +55,7 @@ function updateDisplay() {
 }
 
 // Render the history sidebar from the most recent entries
+// Rebuild the history list from the recent calculation entries stored in memory.
 function renderHistory() {
   const items = history.slice(-20).reverse();
 
@@ -233,6 +236,7 @@ function renderSitePermission(isAllowed) {
 
 // Figure out which site the popup is currently sitting on top of, and
 // whether the calculator already has permission to run there.
+// Discover which site the popup is currently open on and whether it already has permission.
 async function loadSitePermissionState() {
   const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true });
   const url = activeTab?.url;

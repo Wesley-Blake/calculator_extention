@@ -9,7 +9,7 @@
 //   power      := primary ('^' power)?      -- right-associative
 //   primary    := number | '(' expression ')' | ('+' | '-') primary
 (function (global) {
-  // Splits a raw expression string into number and operator tokens.
+  // Split a raw expression string into simple tokens that the parser can read.
   function tokenize(input) {
     const tokens = [];
     let index = 0;
@@ -63,6 +63,7 @@
     return tokens;
   }
 
+  // Build a small parser object that can evaluate expressions using recursive descent.
   function createParser(tokens) {
     let index = 0;
 
@@ -143,6 +144,7 @@
     return { parseExpression, index: () => index, tokens };
   }
 
+  // Public entry point: evaluate a string expression and return a displayable result.
   function evaluateExpression(input) {
     if (!input || !input.trim()) {
       return '0';

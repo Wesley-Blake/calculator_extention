@@ -23,6 +23,7 @@ browser.storage.onChanged.addListener((changes, area) => {
   }
 });
 
+// Revoke access for one origin and reload any already-open tabs on that site.
 async function revokeOrigin(origin) {
   // Look up tabs already on this site while we still hold the host
   // permission needed to see their URLs — we're about to give that up.
@@ -39,6 +40,7 @@ async function revokeOrigin(origin) {
   await Promise.all(openTabs.map((tab) => browser.tabs.reload(tab.id).catch(() => {})));
 }
 
+// Create the visual row shown in the settings page for a single allowed site.
 function renderHostRow(origin) {
   const row = document.createElement('div');
   row.className = 'host-row';
@@ -60,6 +62,7 @@ function renderHostRow(origin) {
   return row;
 }
 
+// Render the current list of allowed hosts into the settings page UI.
 async function render() {
   const hosts = await getAllowedHosts();
   hostsContainer.innerHTML = '';

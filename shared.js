@@ -5,15 +5,18 @@
 const ALLOWED_HOSTS_KEY = 'allowedHosts';
 const THEME_STORAGE_KEY = 'calculator-theme';
 
+// Convert an origin like https://example.com into the browser permission pattern.
 function originPattern(origin) {
   return `${origin}/*`;
 }
 
+// Read the list of sites that the user has allowed the calculator to run on.
 async function getAllowedHosts() {
   const stored = await browser.storage.local.get(ALLOWED_HOSTS_KEY);
   return stored[ALLOWED_HOSTS_KEY] || [];
 }
 
+// Add a site to the allow-list while preserving any existing entries.
 async function addAllowedHost(origin) {
   const hosts = await getAllowedHosts();
   await browser.storage.local.set({
@@ -21,6 +24,7 @@ async function addAllowedHost(origin) {
   });
 }
 
+// Remove a site from the allow-list.
 async function removeAllowedHost(origin) {
   const hosts = await getAllowedHosts();
   await browser.storage.local.set({
