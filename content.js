@@ -1,7 +1,57 @@
-// Content script: show a floating calculator when the user double-clicks into an input.
+// Content script: shows a floating calculator when the user double-clicks
+// into an input, textarea, or content-editable element.
+//
+// This file is only ever injected into sites the user has granted
+// permission to (see background.js), so no permission check is needed
+// here — if this code is running, the site is allowed.
 
-function createCalculatorOverlay() {
+// Same storage key and dark/light color choices as popup/popup.js and
+// popup.css, so the on-page overlay matches whatever theme is set in the
+// popup. Kept as a small inline palette (rather than sharing popup.css)
+// since this needs to stay independent of the host page's own stylesheet.
+const THEME_STORAGE_KEY = 'calculator-theme';
+const THEMES = {
+  dark: {
+    background: '#111827',
+    border: '#374151',
+    text: '#f9fafb',
+    inputBackground: '#1f2937',
+    placeholder: '#64748b',
+    shadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
+  },
+  light: {
+    background: '#ffffff',
+    border: '#cbd5e1',
+    text: '#0f172a',
+    inputBackground: '#e2e8f0',
+    placeholder: '#64748b',
+    shadow: '0 8px 24px rgba(15, 23, 42, 0.12)',
+  },
+};
+
+async function getTheme() {
+  const stored = await browser.storage.local.get(THEME_STORAGE_KEY);
+  return THEMES[stored[THEME_STORAGE_KEY]] ? stored[THEME_STORAGE_KEY] : 'dark';
+}
+
+// Placeholder color needs a real stylesheet rule (::placeholder can't be
+// set inline), scoped by ID so it can't leak into or clash with the host
+// page's own styles.
+function applyPlaceholderStyle(color) {
+  let styleEl = document.getElementById('ext-calc-style');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'ext-calc-style';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = `#ext-calc-input::placeholder { color: ${color}; }`;
+}
+
+function createCalculatorOverlay(theme) {
   if (document.getElementById('ext-calc-overlay')) return null;
+
+  const colors = THEMES[theme] || THEMES.dark;
+  applyPlaceholderStyle(colors.placeholder);
 
   const overlay = document.createElement('div');
   overlay.id = 'ext-calc-overlay';
@@ -9,85 +59,75 @@ function createCalculatorOverlay() {
   overlay.style.zIndex = 2147483647;
   overlay.style.minWidth = '220px';
   overlay.style.padding = '8px';
-  overlay.style.background = '#fff';
-  overlay.style.border = '1px solid #ccc';
-  overlay.style.borderRadius = '6px';
-  overlay.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+  overlay.style.background = colors.background;
+  overlay.style.border = `1px solid ${colors.border}`;
+  overlay.style.borderRadius = '10px';
+  overlay.style.boxShadow = colors.shadow;
   overlay.style.fontFamily = 'Arial, sans-serif';
 
   overlay.innerHTML = `
-    <input id="ext-calc-input" type="text" placeholder="Enter expression and press Enter" 
-      style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;" />
+    <input id="ext-calc-input" type="text" placeholder="Enter expression and press Enter"
+      style="width:100%;padding:8px;border-radius:6px;box-sizing:border-box;background:${colors.inputBackground};border:1px solid ${colors.border};color:${colors.text};" />
   `;
 
   document.body.appendChild(overlay);
 
   const input = overlay.querySelector('#ext-calc-input');
 
-  function evaluateExpression(expr) {
-    try {
-      if (window.Calculator && typeof window.Calculator.evaluateExpression === 'function') {
-        return window.Calculator.evaluateExpression(expr || '');
-      }
-    } catch (e) {}
-    return 'Error';
-  }
+  input.addEventListener('keydown', async (event) => {
+    if (event.key === 'Enter') {
+      const out = window.Calculator.evaluateExpression(input.value || '');
 
-  input.addEventListener('keydown', async (ev) => {
-    if (ev.key === 'Enter') {
-      const out = evaluateExpression(input.value || '');
+      if (out && out !== 'Error' && overlay._target) {
+        const target = overlay._target;
 
-      if (out && out !== 'Error') {
-        // Replace the entire target field value/content with the result
-        try {
-          if (overlay._target) {
-            const target = overlay._target;
-            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-              try {
-                target.value = out;
-                const pos = String(out).length;
-                try { target.setSelectionRange(pos, pos); } catch (e) {}
-              } catch (e) {
-                target.value = out;
-              }
-            } else if (target.isContentEditable) {
-              target.innerText = out;
-              try {
-                const range = document.createRange();
-                range.selectNodeContents(target);
-                range.collapse(false);
-                const sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(range);
-              } catch (e) {}
-            }
-            try { await navigator.clipboard.writeText(out); } catch (e) {}
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+          target.value = out;
+          // Not every input type supports setSelectionRange (e.g. type="number").
+          try {
+            const pos = String(out).length;
+            target.setSelectionRange(pos, pos);
+          } catch (e) {
+            // Selection isn't supported on this input type — value is already set.
           }
-        } catch (e) {}
+        } else if (target.isContentEditable) {
+          target.innerText = out;
+          const range = document.createRange();
+          range.selectNodeContents(target);
+          range.collapse(false);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+
+        try {
+          await navigator.clipboard.writeText(out);
+        } catch (e) {
+          // Clipboard access can be denied by the page/browser; not critical.
+        }
       }
+
       removeOverlay();
     }
-    if (ev.key === 'Escape') removeOverlay();
+
+    if (event.key === 'Escape') removeOverlay();
   });
 
   return overlay;
 }
 
 function removeOverlay() {
-  const el = document.getElementById('ext-calc-overlay');
-  if (el) el.remove();
+  const overlay = document.getElementById('ext-calc-overlay');
+  if (overlay) overlay.remove();
 }
 
-function showOverlayNearTarget(target, prefill) {
-  let overlay = document.getElementById('ext-calc-overlay') || createCalculatorOverlay();
+async function showOverlayNearTarget(target, prefill) {
+  const overlay = document.getElementById('ext-calc-overlay') || createCalculatorOverlay(await getTheme());
   if (!overlay) return;
 
   const rect = target.getBoundingClientRect();
-  const top = window.scrollY + rect.bottom + 6;
-  const left = window.scrollX + rect.left;
-
-  overlay.style.top = `${top}px`;
-  overlay.style.left = `${left}px`;
+  overlay.style.top = `${window.scrollY + rect.bottom + 6}px`;
+  overlay.style.left = `${window.scrollX + rect.left}px`;
 
   const input = overlay.querySelector('#ext-calc-input');
   input.value = prefill || '';
@@ -96,42 +136,35 @@ function showOverlayNearTarget(target, prefill) {
   overlay._target = target;
 }
 
-// Listen for double-clicks on input-like elements
-document.addEventListener('dblclick', (ev) => {
-  const t = ev.target;
-  if (!t) return;
-  const isInput = (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') || t.isContentEditable;
-  if (!isInput) return;
+// Pull the current text selection out of the target element, if any, so the
+// overlay can start pre-filled with what the user already had selected.
+function getSelectionPrefill(target) {
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+    const { selectionStart: start, selectionEnd: end } = target;
+    return start !== null && end !== null && end > start ? target.value.slice(start, end) : '';
+  }
 
-  // If there's a selection inside the element, use it as prefill
-  let prefill = '';
-  try {
-    if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') {
-      const start = t.selectionStart;
-      const end = t.selectionEnd;
-      if (start !== null && end !== null && end > start) {
-        prefill = t.value.slice(start, end);
-      }
-    } else {
-      const sel = window.getSelection();
-      if (sel && sel.toString()) prefill = sel.toString();
-    }
-  } catch (e) {}
+  const selection = window.getSelection();
+  return selection ? selection.toString() : '';
+}
 
-  showOverlayNearTarget(t, prefill);
+document.addEventListener('dblclick', (event) => {
+  const target = event.target;
+  if (!target) return;
+
+  const isEditable = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+  if (!isEditable) return;
+
+  showOverlayNearTarget(target, getSelectionPrefill(target));
 });
 
-// Close overlay on Escape anywhere or click outside
-document.addEventListener('keydown', (ev) => {
-  if (ev.key === 'Escape') removeOverlay();
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') removeOverlay();
 });
 
-document.addEventListener('click', (ev) => {
+// Clicking outside the overlay dismisses it.
+document.addEventListener('click', (event) => {
   const overlay = document.getElementById('ext-calc-overlay');
-  if (!overlay) return;
-  if (overlay.contains(ev.target)) return;
-  // If clicked outside an input/textarea that opened it, remove overlay
+  if (!overlay || overlay.contains(event.target)) return;
   removeOverlay();
 });
-
-// Content script loaded.

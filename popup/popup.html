@@ -10,12 +10,20 @@
     <div class="calculator">
       <div class="calculator-main">
         <div class="toolbar">
-          <span class="toolbar-label">
-            Calculator
-            <span class="tooltip-trigger" aria-label="Supported operators">?</span>
-            <span class="tooltip-bubble">+ − × ÷ ^ ( )</span>
+          <span class="toolbar-left">
+            <button id="settings-button" class="icon-button" type="button" aria-label="Open settings">⚙️</button>
+            <span class="toolbar-label">
+              Calculator
+              <span class="tooltip-trigger" aria-label="Supported operators">?</span>
+              <span class="tooltip-bubble">+ − × ÷ ^ ( )</span>
+            </span>
           </span>
           <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme">🌙</button>
+        </div>
+
+        <div class="site-permission">
+          <span id="site-permission-label" class="site-permission-label">Checking site…</span>
+          <button id="site-permission-button" class="site-permission-button" type="button" hidden>Allow this site</button>
         </div>
 
         <div class="display">
@@ -29,6 +37,7 @@
       </div>
     </div>
 
+    <script src="../shared.js"></script>
     <script src="../calculator.js"></script>
     <script src="popup.js"></script>
   </body>

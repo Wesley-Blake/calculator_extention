@@ -1,4 +1,15 @@
+// Core calculator logic: a small tokenizer + recursive-descent parser that
+// evaluates arithmetic expressions (+ - * / ^ and parentheses) without
+// using eval(). Exposed as window.Calculator / module.exports so both the
+// popup and the content script can share it.
+//
+// Grammar, loosest-binding first (mirrors the parse* function nesting):
+//   expression := term (('+' | '-') term)*
+//   term       := power (('*' | '/') power)*
+//   power      := primary ('^' power)?      -- right-associative
+//   primary    := number | '(' expression ')' | ('+' | '-') primary
 (function (global) {
+  // Splits a raw expression string into number and operator tokens.
   function tokenize(input) {
     const tokens = [];
     let index = 0;

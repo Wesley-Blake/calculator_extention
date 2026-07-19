@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Calculator Extension Settings</title>
+    <style>
+      /* Same dark/dark-is-default palette as popup.css, so this page
+         matches whatever theme is set in the popup. */
+      :root {
+        --body-background: #0f172a;
+        --border-color: #374151;
+        --text-color: #f9fafb;
+        --muted-text-color: #94a3b8;
+        --row-hover: #1f2937;
+        --danger-color: #f87171;
+      }
+
+      :root.theme-light {
+        --body-background: #f8fafc;
+        --border-color: #cbd5e1;
+        --text-color: #0f172a;
+        --muted-text-color: #475569;
+        --row-hover: #e2e8f0;
+        --danger-color: #dc2626;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 24px;
+        background: var(--body-background);
+        color: var(--text-color);
+      }
+
+      h1 {
+        font-size: 18px;
+        margin: 0 0 8px;
+      }
+
+      p {
+        margin: 0 0 16px;
+        color: var(--muted-text-color);
+        font-size: 13px;
+        max-width: 480px;
+      }
+
+      #hosts {
+        max-width: 480px;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .host-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .host-row:last-child {
+        border-bottom: none;
+      }
+
+      .host-row:hover {
+        background: var(--row-hover);
+      }
+
+      .host-origin {
+        font-family: monospace;
+        font-size: 13px;
+      }
+
+      button {
+        border: 1px solid var(--danger-color);
+        border-radius: 999px;
+        padding: 4px 10px;
+        background: transparent;
+        color: var(--danger-color);
+        font-size: 12px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Calculator Extension Settings</h1>
+    <p>Sites the calculator overlay is allowed to run on. Grant access from the extension popup's "Allow this site" button.</p>
+    <div id="hosts">Loading…</div>
+    <script src="../shared.js"></script>
+    <script src="settings.js"></script>
+  </body>
+</html>

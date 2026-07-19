@@ -78,6 +78,12 @@ body {
   color: var(--text-color);
 }
 
+.toolbar-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .toolbar-label {
   font-size: 12px;
   opacity: 0.8;
@@ -85,6 +91,20 @@ body {
   align-items: center;
   gap: 6px;
   position: relative;
+}
+
+.icon-button {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--history-border);
+  border-radius: 999px;
+  background: var(--calculator-background);
+  color: var(--button-color);
+  font-size: 11px;
+  cursor: pointer;
 }
 
 .tooltip-trigger {
@@ -130,6 +150,40 @@ body {
   background: var(--calculator-background);
   color: var(--button-color);
   cursor: pointer;
+}
+
+.site-permission {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--history-item-hover);
+  color: var(--history-item-color);
+  font-size: 11px;
+}
+
+.site-permission-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-permission-button {
+  flex-shrink: 0;
+  border: 1px solid var(--history-border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  background: var(--calculator-background);
+  color: var(--button-color);
+  cursor: pointer;
+}
+
+.site-permission-button.is-allowed {
+  color: var(--history-result-color);
+  border-color: var(--history-result-color);
 }
 
 .display {

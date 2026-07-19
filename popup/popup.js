@@ -3,11 +3,13 @@ const expressionEl = document.getElementById('expression');
 const resultEl = document.getElementById('result');
 const historyPanel = document.getElementById('history-panel');
 const themeToggle = document.getElementById('theme-toggle');
+const settingsButton = document.getElementById('settings-button');
+const sitePermissionLabel = document.getElementById('site-permission-label');
+const sitePermissionButton = document.getElementById('site-permission-button');
 
 // Current calculator input and recent result history
 let expression = '';
 let history = [];
-const THEME_STORAGE_KEY = 'calculator-theme';
 
 function applyTheme(theme) {
   const isLight = theme === 'light';
@@ -19,9 +21,18 @@ function applyTheme(theme) {
   }
 }
 
+// The on-page overlay (content.js) can't see this page's localStorage, so
+// the theme is mirrored into shared extension storage whenever it's read
+// or changed here.
+function persistTheme(theme) {
+  window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  browser.storage.local.set({ [THEME_STORAGE_KEY]: theme });
+}
+
 function loadTheme() {
   const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
   applyTheme(savedTheme);
+  persistTheme(savedTheme);
 }
 
 function setExpression(nextExpression) {
@@ -199,10 +210,81 @@ document.addEventListener('keydown', (event) => {
 
 themeToggle?.addEventListener('click', () => {
   const nextTheme = document.documentElement.classList.contains('theme-light') ? 'dark' : 'light';
-  window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+  persistTheme(nextTheme);
   applyTheme(nextTheme);
+});
+
+// --- Site permission ------------------------------------------------------
+// The calculator overlay (content.js) only runs on sites the user has
+// explicitly allowed. This button requests that permission for whichever
+// site the popup was opened on top of, via the real browser permission
+// prompt, and background.js reacts by registering the content script there.
+
+let currentOrigin = null;
+let currentTabId = null;
+
+function renderSitePermission(isAllowed) {
+  sitePermissionLabel.textContent = new URL(currentOrigin).hostname;
+  sitePermissionButton.hidden = false;
+  sitePermissionButton.textContent = isAllowed ? 'Allowed ✓' : 'Allow this site';
+  sitePermissionButton.dataset.allowed = String(isAllowed);
+  sitePermissionButton.classList.toggle('is-allowed', isAllowed);
+}
+
+// Figure out which site the popup is currently sitting on top of, and
+// whether the calculator already has permission to run there.
+async function loadSitePermissionState() {
+  const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true });
+  const url = activeTab?.url;
+
+  if (!url || !/^https?:\/\//.test(url)) {
+    // Internal browser pages (about:, moz-extension:, etc.) can't be
+    // granted host permissions, so there's nothing to offer here.
+    sitePermissionLabel.textContent = "Calculator can't run on this page";
+    return;
+  }
+
+  currentOrigin = new URL(url).origin;
+  currentTabId = activeTab.id;
+  const isAllowed = await browser.permissions.contains({ origins: [originPattern(currentOrigin)] });
+  renderSitePermission(isAllowed);
+}
+
+sitePermissionButton?.addEventListener('click', async () => {
+  if (!currentOrigin) return;
+
+  const wasAllowed = sitePermissionButton.dataset.allowed === 'true';
+  let changed = false;
+
+  if (wasAllowed) {
+    await browser.permissions.remove({ origins: [originPattern(currentOrigin)] });
+    await removeAllowedHost(currentOrigin);
+    await requestUnregistration(currentOrigin);
+    renderSitePermission(false);
+    changed = true;
+  } else {
+    const granted = await browser.permissions.request({ origins: [originPattern(currentOrigin)] });
+    if (granted) {
+      await addAllowedHost(currentOrigin);
+      await requestRegistration(currentOrigin);
+      changed = true;
+    }
+    renderSitePermission(granted);
+  }
+
+  // Dynamic content-script registrations only take effect on future page
+  // loads, so the already-open tab needs a reload to actually pick up (or
+  // drop) the calculator overlay.
+  if (changed && currentTabId != null) {
+    browser.tabs.reload(currentTabId);
+  }
+});
+
+settingsButton?.addEventListener('click', () => {
+  browser.runtime.openOptionsPage();
 });
 
 // Initialize UI state when popup loads
 loadTheme();
 updateDisplay();
+loadSitePermissionState();

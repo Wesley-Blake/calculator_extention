@@ -4,18 +4,18 @@
   "version": "1.0.0",
   "description": "A simple starter extension for Firefox.",
   "permissions": ["activeTab", "storage"],
+  "optional_permissions": ["*://*/*"],
   "background": {
-    "scripts": ["background.js"],
-    "persistent": false
+    "scripts": ["shared.js", "background.js"],
+    "persistent": true
   },
   "browser_action": {
     "default_title": "My First Firefox Extension",
     "default_popup": "popup/popup.html"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["calculator.js", "content.js"]
-    }
-  ]
+  "options_ui": {
+    "page": "popup/settings.html",
+    "open_in_tab": true,
+    "browser_style": false
+  }
 }
